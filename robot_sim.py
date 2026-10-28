@@ -161,27 +161,44 @@ DROP_ZONE_HALF = BOX_INNER_HALF
 # ============================================================================
 
 def clamp_to_workspace(target: Sequence[float]) -> np.ndarray:
-    """Project a Cartesian target onto the safe, reachable workspace."""
+    """Clamp a finite XYZ target to the intersection of the safe workspace.
 
+    The feasible region is above MIN_Z, outside the base's inner cylinder,
+    and inside the shoulder-centered reach sphere. Applying the constraints
+    only once can violate the inner-cylinder limit when the reach projection
+    moves a point back toward the base, so the final point is revalidated.
+    """
     t = np.asarray(target, dtype=np.float64).copy()
+    if t.shape != (3,):
+        raise ValueError("Workspace target must contain exactly three XYZ values.")
+    if not np.all(np.isfinite(t)):
+        raise ValueError("Workspace target must contain only finite values.")
 
     # Floor: the fingertips must never go through it.
-    t[2] = max(t[2], MIN_Z)
+    t[2] = max(float(t[2]), MIN_Z)
 
-    # Inner cylinder: avoid colliding with the base column.
-    r = math.hypot(t[0], t[1])
-    if r < MIN_RADIUS:
-        if r < 1e-6:
-            t[0], t[1] = MIN_RADIUS, 0.0
-        else:
-            t[0] *= MIN_RADIUS / r
-            t[1] *= MIN_RADIUS / r
-
-    # Outer sphere around the shoulder.
+    # First project into the outer reach sphere.
     offset = t - SHOULDER
     dist = float(np.linalg.norm(offset))
     if dist > MAX_REACH:
         t = SHOULDER + offset * (MAX_REACH / dist)
+
+    # Enforce the inner cylinder after reach projection.
+    r = math.hypot(float(t[0]), float(t[1]))
+    if r < MIN_RADIUS:
+        if r < 1e-9:
+            t[0], t[1] = MIN_RADIUS, 0.0
+        else:
+            t[0] *= MIN_RADIUS / r
+            t[1] *= MIN_RADIUS / r
+        r = MIN_RADIUS
+
+    # Moving outward from the base can push the point outside the sphere.
+    # Clamp height to the sphere's valid vertical interval at this radius.
+    z_span = math.sqrt(max(0.0, MAX_REACH * MAX_REACH - r * r))
+    min_z_at_radius = float(SHOULDER[2]) - z_span
+    max_z_at_radius = float(SHOULDER[2]) + z_span
+    t[2] = max(MIN_Z, min(max_z_at_radius, max(min_z_at_radius, float(t[2]))))
 
     return t
 
