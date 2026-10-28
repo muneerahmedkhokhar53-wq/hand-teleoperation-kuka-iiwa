@@ -1,4 +1,6 @@
-numpy
-opencv-python
-mediapipe
-pybullet
+# Tested-compatible baseline for the legacy MediaPipe Hands API used by hand_tracker.py.
+# Python 3.11 (64-bit) is the recommended runtime for this dependency set.
+numpy==1.26.4
+opencv-contrib-python==4.10.0.84
+mediapipe==0.10.14
+pybullet==3.2.7

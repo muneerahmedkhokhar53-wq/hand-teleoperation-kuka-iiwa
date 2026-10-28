@@ -1,147 +1,159 @@
 # Vision Teleoperation: Hand-Controlled KUKA iiwa Pick & Place
 
-Control a simulated **7-DOF KUKA iiwa** robot arm with your **bare hand and a webcam**. Hand landmarks are tracked in real time with MediaPipe, mapped to a Cartesian target, and solved with inverse kinematics inside a **PyBullet** physics simulation. A physically simulated two-finger gripper lets you pick up cubes and drop them into a container box.
+Control a **simulated 7-DOF KUKA iiwa** robot using a webcam and bare-hand gestures. MediaPipe tracks your hand, the palm is mapped to a Cartesian target, and PyBullet simulates inverse kinematics, a two-finger gripper, and pick-and-place objects.
 
-<!-- Add a real, checked-in demo at docs/demo.gif when available. Do not use a placeholder image. -->
+> **Simulation only.** This project does not connect to a physical KUKA robot. Do not use it as a real-robot control system.
 
 ## Features
 
-- **Full-hand control:** the palm center (wrist + four knuckles) drives the robot, so the control point stays steady while you pinch.
-- **Depth from hand size:** move your hand toward or away from the camera to move the robot forward and back.
-- **Gesture control:** pinch to close the gripper, open palm to release, fist to clutch.
-- **Physical gripper:** two prismatic fingers with friction and force limits, not a "magic" attach.
-- **Smooth, safe motion:** One Euro filtering on landmarks, low-pass filtering plus a speed limit on the target, and workspace clamping.
-- **Safety lock:** the arm starts on HOLD and moves only while a hand is visible, HOLD is off, and the fist clutch is released.
-- **Live HUD:** status, gesture, FPS, target vs. actual position, tracking error, gripper opening, and cube score.
-
-## Controls
-
-### Hand
-
-| Hand motion | Robot response |
-|---|---|
-| Palm left / right | Robot Y |
-| Palm up / down | Robot Z |
-| Hand nearer / farther from camera | Robot X (apparent hand size = depth) |
-
-### Gestures
-
-| Gesture | Action |
-|---|---|
-| Fist | Clutch: the robot holds its pose so you can reposition your hand |
-| Pinch (thumb + index) | Close gripper |
-| Open palm | Open gripper |
-
-### Keyboard (camera window)
-
-| Key | Action |
-|---|---|
-| `SPACE` | Hold / resume control |
-| `R` | Reset robot and scene |
-| `N` | Respawn cubes only |
-| `D` | Depth control on / off |
-| `C` | Calibrate neutral depth |
-| `H` | Show / hide HUD |
-| `Q` / `ESC` | Quit |
-
-## How to Pick and Place
-
-1. Press `SPACE` to hand over control (depth is auto-calibrated on the first press).
-2. Move above a cube with an open palm.
-3. Lower your hand until the gripper surrounds the cube.
-4. **Pinch** to grab, lift, and move to the green container.
-5. **Open your palm** to release the cube. Use a **fist** any time to re-center your hand.
-
-## Project Structure
-
-```
-Vision_Teleoperation/
-├── teleoperation.py   # Entry point: camera loop, hand-to-robot mapping, HUD
-├── hand_tracker.py    # MediaPipe tracking, One Euro filter, gesture recognition, drawing
-├── robot_sim.py       # PyBullet scene, KUKA iiwa, gripper, cubes, container, IK
-├── requirements.txt
-├── LICENSE
-└── README.md
-```
+- Full-palm position control, with apparent hand size used as a depth signal
+- Fist clutch, pinch-to-close, and open-palm-to-release gestures
+- PyBullet robot and physically simulated gripper
+- Target smoothing, workspace clamping, and speed-limited target updates
+- Startup HOLD state and live camera HUD
 
 ## Requirements
 
-This repository describes a **simulation** workflow; it does not connect to or control a physical KUKA robot. Validate any real-robot adaptation separately with the robot manufacturer’s safety procedures.
+- **Recommended: 64-bit Python 3.11**. The dependency set is pinned for the legacy MediaPipe `mp.solutions.hands` API used by this project.
+- Windows, macOS, or Linux desktop with GUI support
+- Webcam for full teleoperation
+- Working display/GUI support for PyBullet and OpenCV
 
-- Python 3.9 to 3.12
-- A webcam
-- Packages: `numpy`, `opencv-python`, `mediapipe`, `pybullet`
+The standalone simulator does not require a webcam, but it still requires the Python packages and a graphical session.
 
-## Installation
+## Clean installation
+
+### Windows (PowerShell)
+
+Open PowerShell in the folder where you keep projects:
+
+```powershell
+git clone https://github.com/muneerahmedkhokhar53-wq/hand-teleoperation-kuka-iiwa.git
+Set-Location hand-teleoperation-kuka-iiwa
+
+# Confirm that the Python launcher can find Python 3.11.
+py -3.11 --version
+
+# Create and activate a project-specific environment.
+py -3.11 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+python -m pip check
+```
+
+If PowerShell blocks environment activation, you can avoid changing execution policy and invoke the environment's Python directly:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m pip check
+```
+
+If `py -3.11` is unavailable, install **64-bit Python 3.11** first, then reopen PowerShell. Avoid using a very new Python release until you have verified wheel availability for every dependency.
+
+### macOS / Linux
 
 ```bash
 git clone https://github.com/muneerahmedkhokhar53-wq/hand-teleoperation-kuka-iiwa.git
 cd hand-teleoperation-kuka-iiwa
-
-python -m venv venv
-
-# Windows
-venv\Scripts\activate
-# macOS / Linux
-source venv/bin/activate
-
-pip install -r requirements.txt
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+python -m pip check
 ```
 
-> **Note:** On Windows, `pybullet` may need the Microsoft C++ Build Tools if no prebuilt wheel is available for your Python version.
+On Linux, a desktop session and camera permissions are required for the full webcam app. Headless/SSH environments without GUI forwarding cannot display the PyBullet GUI.
 
-## Usage
+## Verify the install
 
-```bash
+Run these commands from the repository root with the virtual environment active:
+
+```powershell
+python -c "import cv2, mediapipe, numpy, pybullet, pybullet_data; print('OpenCV', cv2.__version__); print('MediaPipe', mediapipe.__version__); print('NumPy', numpy.__version__); print('PyBullet import OK')"
+python -c "import mediapipe as mp; assert hasattr(mp, 'solutions'); print('MediaPipe Hands API OK')"
+python -m compileall -q teleoperation.py hand_tracker.py robot_sim.py
+```
+
+If all three commands complete without errors, imports, the expected MediaPipe API, and Python syntax passed these checks. This is not a full simulation or webcam test.
+
+## Launch
+
+### Full hand-controlled simulation
+
+```powershell
 python teleoperation.py
 ```
 
-Two windows open: the **PyBullet simulation** and the **camera view** with the HUD. The system starts in **HOLD**. Press `SPACE` in the camera window to begin.
+Two windows should appear: the PyBullet scene and the camera/HUD window. The arm starts in **HOLD**. Press `SPACE` in the camera window to enable hand control.
 
-To test the robot and gripper without the camera:
+### Simulator-only smoke test (no webcam)
 
-```bash
+```powershell
 python robot_sim.py
 ```
 
-Keys (click the PyBullet window first): `E` enable, `D` disable, `G` open gripper, `C` close gripper, `R` reset, `Q` quit, `I/K` move X, `J/L` move Y, `U/O` move Z.
+Click the PyBullet window before using its keyboard controls.
 
-## How It Works
+## Controls
 
-1. **Capture:** frames are read from the webcam with OpenCV and mirrored.
-2. **Track:** `hand_tracker.py` runs MediaPipe Hands, smooths the 21 landmarks with a One Euro filter, and classifies the gesture with angle-based finger detection and majority voting.
-3. **Map:** the palm center is normalized inside a control zone and mapped to a robot target. Hand size sets the depth (X).
-4. **Filter:** the target is low-pass filtered, speed-limited, and clamped to the reachable workspace.
-5. **Solve:** `robot_sim.py` computes inverse kinematics with the tool pointing straight down and drives the joint motors.
-6. **Grip:** debounced pinch / open-palm gestures command the physical two-finger gripper.
+### Camera / teleoperation window
 
-## Configuration
+| Key or gesture | Action |
+|---|---|
+| `SPACE` | Hold / resume control |
+| Fist | Clutch; hold the robot pose while repositioning your hand |
+| Pinch (thumb + index) | Close the gripper |
+| Open palm | Open the gripper |
+| `R` | Reset robot and scene |
+| `N` | Respawn cubes |
+| `D` | Toggle depth control |
+| `C` | Calibrate neutral depth |
+| `H` | Toggle HUD |
+| `Q` / `ESC` | Quit |
 
-Common settings live at the top of each file.
+### Simulator-only window
 
-| Setting | File | Purpose |
-|---|---|---|
-| `ZONE` | `teleoperation.py` | Camera region that maps to the robot range |
-| `XY_GAIN`, `DEPTH_GAIN` | `teleoperation.py` | Hand-motion sensitivity |
-| `SMOOTH_TAU`, `MAX_SPEED` | `teleoperation.py` | Target smoothing and speed limit |
-| `CAMERA_INDEX` | `hand_tracker.py` | Which webcam to use |
-| `PINCH_ENTER`, `PINCH_EXIT` | `hand_tracker.py` | Pinch sensitivity (with hysteresis) |
-| `CUBE_SIZE`, `CUBE_MASS`, `CUBE_SPOTS` | `robot_sim.py` | Cube properties and layout |
-| `BOX_CENTER`, `BOX_INNER_HALF` | `robot_sim.py` | Container position and size |
+| Key | Action |
+|---|---|
+| `E` / `D` | Enable / disable motion |
+| `G` / `C` | Open / close gripper |
+| `R` | Reset |
+| `I` / `K` | Move target along X |
+| `J` / `L` | Move target along Y |
+| `U` / `O` | Move target along Z |
+| `Q` | Quit |
 
 ## Troubleshooting
 
-- **Camera does not open:** close other apps using the webcam, or change `CAMERA_INDEX` in `hand_tracker.py`.
-- **Robot does not move:** press `SPACE` to release HOLD, show your hand, and make sure it is not in a fist.
-- **Jittery or lost tracking:** improve lighting and keep your hand fully in view against a plain background.
-- **Cannot reach a cube:** press `C` to recalibrate depth with your hand at a comfortable distance.
-- **`mediapipe` has no attribute `solutions`:** install a MediaPipe version that still ships the `solutions` API (for example `pip install "mediapipe==0.10.14"`).
+- **`py -3.11` not found:** install 64-bit Python 3.11 and reopen the terminal.
+- **MediaPipe has no `solutions` attribute:** confirm the active interpreter is the project virtual environment and reinstall the pinned requirements.
+- **Camera cannot open:** close apps using the webcam, check Windows camera privacy permissions, and change `CAMERA_INDEX` in `hand_tracker.py` if needed.
+- **PyBullet GUI fails to open:** run locally in a desktop session with working graphics drivers; a headless terminal may not support GUI mode.
+- **Robot does not move:** press `SPACE`, keep your hand visible, and release the fist clutch.
+- **Jittery tracking:** improve lighting, keep the hand in frame, and use a simple background.
+- **Pip cannot find a compatible wheel:** verify that Python is 64-bit and 3.11, then update pip in the active virtual environment.
 
-## Future Improvements
+## Project structure
 
-- Orientation control (wrist rotation)
-- More objects and task variations
-- Voice command integration
+```text
+hand-teleoperation-kuka-iiwa/
+├── teleoperation.py   # Webcam loop, hand mapping, controls, HUD
+├── hand_tracker.py    # MediaPipe landmarks and gesture recognition
+├── robot_sim.py       # PyBullet robot, gripper, objects, inverse kinematics
+├── requirements.txt   # Pinned runtime dependencies
+├── LICENSE
+└── README.md
+```
+
+## Limitations and responsible use
+
+- This is a simulation and is not certified or safety-rated for real equipment.
+- Apparent hand size is only an approximate depth cue; it is not metric depth sensing.
+- Gesture recognition and inverse kinematics can fail in difficult lighting or near workspace limits.
+- A successful package install or syntax check does not prove that pick-and-place works reliably. Run the GUI and test the task manually.
 
 ## License
 
