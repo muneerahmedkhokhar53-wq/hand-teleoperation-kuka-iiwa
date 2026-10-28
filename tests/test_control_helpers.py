@@ -170,6 +170,20 @@ class TargetFilterTests(unittest.TestCase):
         self.assertEqual(target.shape, (3,))
         self.assertTrue(np.all(np.isfinite(target)))
 
+    def test_hand_mapping_rejects_malformed_or_non_finite_palm_coordinates(self):
+        mapper = teleop.HandToRobot()
+
+        for palm_xy in (
+            np.array([0.5]),
+            np.array([0.5, 0.4, 0.3]),
+            np.array([[0.5, 0.4]]),
+            np.array([float("nan"), 0.4]),
+            np.array([0.5, float("inf")]),
+        ):
+            with self.subTest(palm_xy=palm_xy):
+                with self.assertRaises(ValueError):
+                    mapper.map(palm_xy)
+
 
 
 class WorkspaceClampTests(unittest.TestCase):
