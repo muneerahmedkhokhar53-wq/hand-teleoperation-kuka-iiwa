@@ -51,6 +51,16 @@ class HandCalibrationTests(unittest.TestCase):
 
         self.assertIsNone(mapper._size)
 
+    def test_update_size_rejects_overflow_without_corrupting_state(self):
+        mapper = teleop.HandToRobot()
+        mapper.update_size(1e308)
+        previous_size = mapper._size
+
+        with self.assertRaises(ValueError):
+            mapper.update_size(1e308)
+
+        self.assertEqual(mapper._size, previous_size)
+
 
 class GripperGateTests(unittest.TestCase):
     def test_frame_count_must_be_a_positive_integer(self):
