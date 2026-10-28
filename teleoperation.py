@@ -203,6 +203,12 @@ class TargetFilter:
 
     def step(self, desired: np.ndarray, dt: float) -> np.ndarray:
         """Move toward a finite target using a positive time step."""
+        if isinstance(dt, (bool, np.bool_)):
+            raise ValueError("dt must be a finite positive number")
+        try:
+            dt = float(dt)
+        except (TypeError, ValueError, OverflowError) as error:
+            raise ValueError("dt must be a finite positive number") from error
         if not math.isfinite(dt) or dt <= 0.0:
             raise ValueError("dt must be a finite positive number")
 
