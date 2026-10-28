@@ -87,7 +87,7 @@ From the repository root with the project environment active:
 python -m unittest discover -s tests -v
 ```
 
-These tests cover gesture-state reset behavior, Cartesian target speed limiting, and finite hand-to-robot mapping. They do not replace interactive webcam or PyBullet task testing.
+These tests cover gesture-state reset behavior, deferred depth calibration, Cartesian target speed limiting, finite hand-to-robot mapping, and workspace constraints. They do not replace interactive webcam or PyBullet task testing.
 
 ## Launch
 
