@@ -64,11 +64,16 @@ class SimulatorIntegrationTests(unittest.TestCase):
 
     def test_gripper_contacts_cube_with_both_fingers_and_releases_it(self):
         """Exercise real finger/cube collision, not only motor joint travel."""
+        # Keep the deliberately suspended test cube in place so gravity does
+        # not move it out of the gripper before the close command is tested.
+        p.setGravity(0, 0, 0)
         body = self.robot.props[0][0]
-        flange_pos, flange_orn = self.robot.get_end_effector_pose()
+        gripper_pos, gripper_orn = p.getBasePositionAndOrientation(
+            self.robot.gripper_id
+        )
         cube_pos, cube_orn = p.multiplyTransforms(
-            flange_pos.tolist(),
-            flange_orn,
+            gripper_pos,
+            gripper_orn,
             [0.0, 0.0, rs.FINGER_CENTER_Z],
             [0.0, 0.0, 0.0, 1.0],
         )
@@ -92,7 +97,9 @@ class SimulatorIntegrationTests(unittest.TestCase):
             p.stepSimulation()
 
         contacts = p.getContactPoints(bodyA=self.robot.gripper_id, bodyB=body)
-        contacting_fingers = {contact[3] for contact in contacts if contact[3] in (0, 1)}
+        contacting_fingers = {
+            contact[3] for contact in contacts if contact[3] in (0, 1)
+        }
         self.assertEqual(
             contacting_fingers,
             {0, 1},
