@@ -53,5 +53,31 @@ class TargetFilterTests(unittest.TestCase):
         self.assertTrue(np.all(np.isfinite(target)))
 
 
+
+class WorkspaceClampTests(unittest.TestCase):
+    def assert_inside_workspace(self, target):
+        point = teleop.rs.clamp_to_workspace(target)
+        radius = float(np.linalg.norm(point - teleop.rs.SHOULDER))
+
+        self.assertTrue(np.all(np.isfinite(point)))
+        self.assertGreaterEqual(float(point[2]), teleop.rs.MIN_Z - 1e-12)
+        self.assertGreaterEqual(float(np.hypot(point[0], point[1])), teleop.rs.MIN_RADIUS - 1e-12)
+        self.assertLessEqual(radius, teleop.rs.MAX_REACH + 1e-9)
+
+    def test_extreme_vertical_target_respects_inner_cylinder_and_reach(self):
+        self.assert_inside_workspace([0.1, 0.0, 10.0])
+
+    def test_origin_target_respects_all_workspace_constraints(self):
+        self.assert_inside_workspace([0.0, 0.0, 0.0])
+
+    def test_non_finite_target_is_rejected(self):
+        with self.assertRaises(ValueError):
+            teleop.rs.clamp_to_workspace([float("nan"), 0.0, 0.5])
+
+    def test_wrong_target_shape_is_rejected(self):
+        with self.assertRaises(ValueError):
+            teleop.rs.clamp_to_workspace([0.1, 0.2])
+
+
 if __name__ == "__main__":
     unittest.main()
