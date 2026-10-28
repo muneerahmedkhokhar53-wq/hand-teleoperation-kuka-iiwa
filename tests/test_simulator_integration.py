@@ -62,6 +62,54 @@ class SimulatorIntegrationTests(unittest.TestCase):
             self.robot.gripper_opening, rs.GRIPPER_MAX_OPENING * 0.8
         )
 
+    def test_gripper_contacts_cube_with_both_fingers_and_releases_it(self):
+        """Exercise real finger/cube collision, not only motor joint travel."""
+        body = self.robot.props[0][0]
+        flange_pos, flange_orn = self.robot.get_end_effector_pose()
+        cube_pos, cube_orn = p.multiplyTransforms(
+            flange_pos.tolist(),
+            flange_orn,
+            [0.0, 0.0, rs.FINGER_CENTER_Z],
+            [0.0, 0.0, 0.0, 1.0],
+        )
+        p.resetBasePositionAndOrientation(body, cube_pos, cube_orn)
+        p.resetBaseVelocity(body, [0, 0, 0], [0, 0, 0])
+
+        self.robot.open_gripper()
+        for _ in range(120):
+            p.stepSimulation()
+
+        open_contacts = p.getContactPoints(
+            bodyA=self.robot.gripper_id, bodyB=body
+        )
+        self.assertFalse(
+            any(contact[3] in (0, 1) for contact in open_contacts),
+            "An open gripper should leave clearance around the test cube.",
+        )
+
+        self.robot.close_gripper()
+        for _ in range(240):
+            p.stepSimulation()
+
+        contacts = p.getContactPoints(bodyA=self.robot.gripper_id, bodyB=body)
+        contacting_fingers = {contact[3] for contact in contacts if contact[3] in (0, 1)}
+        self.assertEqual(
+            contacting_fingers,
+            {0, 1},
+            "A closed gripper should contact the cube with both fingers.",
+        )
+
+        self.robot.open_gripper()
+        for _ in range(120):
+            p.stepSimulation()
+        released_contacts = p.getContactPoints(
+            bodyA=self.robot.gripper_id, bodyB=body
+        )
+        self.assertFalse(
+            any(contact[3] in (0, 1) for contact in released_contacts),
+            "Opening the gripper should release the cube from both fingers.",
+        )
+
     def test_drop_zone_counts_only_a_settled_cube_inside_container(self):
         body = self.robot.props[0][0]
         inside_position = [
