@@ -152,7 +152,9 @@ class TrailBuffer:
     """Fixed-length fingertip trail."""
 
     def __init__(self, length: int = TRAIL_LENGTH):
-        self._pts: Deque[tuple[int, int]] = deque(maxlen=length)
+        if isinstance(length, (bool, np.bool_)) or not isinstance(length, (int, np.integer)) or length <= 0:
+            raise ValueError("trail length must be a positive integer")
+        self._pts: Deque[tuple[int, int]] = deque(maxlen=int(length))
 
     def push(self, point):
         self._pts.append(_pt(point))
