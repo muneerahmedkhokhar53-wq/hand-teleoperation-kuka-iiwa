@@ -79,6 +79,16 @@ python -m compileall -q teleoperation.py hand_tracker.py robot_sim.py
 
 If all three commands complete without errors, imports, the expected MediaPipe API, and Python syntax passed these checks. This is not a full simulation or webcam test.
 
+## Run regression tests
+
+From the repository root with the project environment active:
+
+```powershell
+python -m unittest discover -s tests -v
+```
+
+These tests cover gesture-state reset behavior, Cartesian target speed limiting, and finite hand-to-robot mapping. They do not replace interactive webcam or PyBullet task testing.
+
 ## Launch
 
 ### Full hand-controlled simulation
