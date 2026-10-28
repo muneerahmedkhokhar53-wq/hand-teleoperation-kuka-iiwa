@@ -528,6 +528,9 @@ def main() -> None:
                 cam_trail.append(tuple(palm_px))
             else:
                 cam_trail.clear()
+                # Do not carry a previous hand's gesture votes into a new
+                # tracking session; stale votes could briefly unlock motion.
+                analyzer.reset()
                 gate.update(None)
 
             gesture = info[3] if info is not None else "NO HAND"
