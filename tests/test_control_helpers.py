@@ -51,15 +51,14 @@ class HandCalibrationTests(unittest.TestCase):
 
         self.assertIsNone(mapper._size)
 
-    def test_update_size_rejects_overflow_without_corrupting_state(self):
+    def test_update_size_keeps_extreme_finite_measurements_finite(self):
         mapper = teleop.HandToRobot()
+
         mapper.update_size(1e308)
-        previous_size = mapper._size
+        mapper.update_size(1e308)
 
-        with self.assertRaises(ValueError):
-            mapper.update_size(1e308)
-
-        self.assertEqual(mapper._size, previous_size)
+        self.assertTrue(np.isfinite(mapper._size))
+        self.assertEqual(mapper._size, 1e308)
 
 
 class GripperGateTests(unittest.TestCase):
