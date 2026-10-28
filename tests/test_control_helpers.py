@@ -30,6 +30,18 @@ class GestureAnalyzerTests(unittest.TestCase):
         self.assertEqual(len(analyzer._votes), 0)
 
 
+class HandCalibrationTests(unittest.TestCase):
+    def test_calibration_waits_until_hand_size_is_available(self):
+        mapper = teleop.HandToRobot()
+
+        self.assertFalse(mapper.calibrate())
+        self.assertEqual(mapper.neutral, teleop.DEFAULT_NEUTRAL_SIZE)
+
+        mapper.update_size(0.31)
+        self.assertTrue(mapper.calibrate())
+        self.assertAlmostEqual(mapper.neutral, 0.31)
+
+
 class TargetFilterTests(unittest.TestCase):
     def test_step_respects_cartesian_speed_limit(self):
         start = np.array([0.4, 0.0, 0.4], dtype=np.float64)
