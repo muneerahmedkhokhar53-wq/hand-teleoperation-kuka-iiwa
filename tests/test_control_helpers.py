@@ -138,7 +138,7 @@ class TargetFilterTests(unittest.TestCase):
     def test_step_rejects_non_positive_or_non_finite_dt(self):
         target_filter = teleop.TargetFilter(np.array([0.4, 0.0, 0.4]))
 
-        for dt in (0.0, -0.01, float("nan"), float("inf")):
+        for dt in (0.0, -0.01, float("nan"), float("inf"), -float("inf"), True, False, None, "not-a-number"):
             with self.subTest(dt=dt):
                 with self.assertRaises(ValueError):
                     target_filter.step(np.array([0.5, 0.0, 0.5]), dt)
