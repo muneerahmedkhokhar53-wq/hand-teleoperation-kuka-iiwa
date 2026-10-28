@@ -205,6 +205,8 @@ class GripperGate:
     _MAP = {"PINCH": "close", "OPEN PALM": "open"}
 
     def __init__(self, frames: int = GESTURE_DEBOUNCE) -> None:
+        if isinstance(frames, bool) or not isinstance(frames, int) or frames < 1:
+            raise ValueError("frames must be a positive integer")
         self.frames = frames
         self._pending: Optional[str] = None
         self._count = 0
