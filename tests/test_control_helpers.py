@@ -44,7 +44,7 @@ class HandCalibrationTests(unittest.TestCase):
     def test_update_size_rejects_non_positive_or_non_finite_measurements(self):
         mapper = teleop.HandToRobot()
 
-        for size in (0.0, -0.1, float("nan"), float("inf"), -float("inf")):
+        for size in (0.0, -0.1, float("nan"), float("inf"), -float("inf"), True, False, None, "not-a-number"):
             with self.subTest(size=size):
                 with self.assertRaises(ValueError):
                     mapper.update_size(size)
