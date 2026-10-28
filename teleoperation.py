@@ -194,14 +194,20 @@ class TargetFilter:
             raise ValueError("desired target must contain only finite values")
 
         alpha = 1.0 - math.exp(-dt / SMOOTH_TAU)
-        step = (desired - self.value) * alpha
+        with np.errstate(over="ignore", invalid="ignore"):
+            step = (desired - self.value) * alpha
 
         limit = MAX_SPEED * dt
         length = float(np.linalg.norm(step))
+        if not np.all(np.isfinite(step)) or not math.isfinite(length):
+            raise ValueError("target movement calculation produced non-finite values")
         if length > limit:
             step *= limit / length
 
-        self.value = self.value + step
+        next_value = self.value + step
+        if not np.all(np.isfinite(next_value)):
+            raise ValueError("filtered position must contain only finite values")
+        self.value = next_value
         return self.value
 
 
