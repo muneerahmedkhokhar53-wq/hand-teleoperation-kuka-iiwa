@@ -114,12 +114,14 @@ class HandToRobot:
     def update_size(self, size: float) -> None:
         self._size = size if self._size is None else 0.8 * self._size + 0.2 * size
 
-    def calibrate(self) -> None:
+    def calibrate(self) -> bool:
+        """Set the neutral hand size; return False until a hand is observed."""
         if self._size is None:
-            print("Depth calibration failed: no hand detected.")
-            return
+            print("Depth calibration pending: show your hand.")
+            return False
         self.neutral = self._size
         print(f"Depth calibrated: {self.neutral:.4f}")
+        return True
 
     @property
     def depth_ratio(self) -> float:
@@ -526,6 +528,11 @@ def main() -> None:
 
                 mapper.update_size(float(np.linalg.norm(pts[0] - pts[9]) / h))
                 cam_trail.append(tuple(palm_px))
+
+                # If SPACE was pressed before a hand was visible, defer the
+                # first depth calibration until the first active hand frame.
+                if not hold and first_resume and mapper.calibrate():
+                    first_resume = False
             else:
                 cam_trail.clear()
                 # Do not carry a previous hand's gesture votes into a new
@@ -647,9 +654,8 @@ def main() -> None:
             elif key == ord(" "):
                 hold = not hold
                 print("Manual HOLD enabled." if hold else "Manual HOLD disabled.")
-                if not hold and first_resume:
-                    first_resume = False
-                    mapper.calibrate()  # current hand distance = neutral X
+                # First depth calibration happens when an active hand
+                # is visible, even if SPACE was pressed before the hand appeared.
 
             elif key == ord("r"):
                 print("Resetting robot...")
