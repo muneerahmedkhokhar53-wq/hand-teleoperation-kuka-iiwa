@@ -173,6 +173,16 @@ class TargetFilter:
         self.value = np.asarray(position, dtype=np.float64).copy()
 
     def step(self, desired: np.ndarray, dt: float) -> np.ndarray:
+        """Move toward a finite target using a positive time step."""
+        if not math.isfinite(dt) or dt <= 0.0:
+            raise ValueError("dt must be a finite positive number")
+
+        desired = np.asarray(desired, dtype=np.float64)
+        if desired.shape != self.value.shape:
+            raise ValueError("desired target must match the current position shape")
+        if not np.all(np.isfinite(desired)):
+            raise ValueError("desired target must contain only finite values")
+
         alpha = 1.0 - math.exp(-dt / SMOOTH_TAU)
         step = (desired - self.value) * alpha
 
