@@ -11,6 +11,30 @@ import hand_tracker as ht
 import teleoperation as teleop
 
 
+class TrailBufferTests(unittest.TestCase):
+    def test_length_must_be_a_positive_integer(self):
+        for length in (0, -1, 1.5, True, False, None, "3"):
+            with self.subTest(length=length):
+                with self.assertRaises(ValueError):
+                    ht.TrailBuffer(length=length)
+
+    def test_trail_keeps_only_the_most_recent_points(self):
+        trail = ht.TrailBuffer(length=2)
+        trail.push((1, 2))
+        trail.push((3, 4))
+        trail.push((5, 6))
+
+        self.assertEqual(len(trail), 2)
+        self.assertEqual(list(trail), [(3, 4), (5, 6)])
+
+    def test_clear_removes_all_points(self):
+        trail = ht.TrailBuffer(length=2)
+        trail.push((1, 2))
+        trail.clear()
+
+        self.assertEqual(len(trail), 0)
+
+
 class GestureAnalyzerTests(unittest.TestCase):
     def test_reset_clears_pinching_and_stale_votes(self):
         analyzer = ht.GestureAnalyzer()
