@@ -49,6 +49,40 @@ class SimulatorIntegrationTests(unittest.TestCase):
             self.robot.joint_positions(), rs.HOME_Q, atol=1e-6
         )
 
+    def test_gripper_motors_physically_open_and_close_fingers(self):
+        self.robot.close_gripper()
+        for _ in range(120):
+            p.stepSimulation()
+        self.assertLess(self.robot.gripper_opening, 0.03)
+
+        self.robot.open_gripper()
+        for _ in range(120):
+            p.stepSimulation()
+        self.assertGreater(
+            self.robot.gripper_opening, rs.GRIPPER_MAX_OPENING * 0.8
+        )
+
+    def test_drop_zone_counts_only_a_settled_cube_inside_container(self):
+        body = self.robot.props[0][0]
+        inside_position = [
+            rs.BOX_CENTER[0],
+            rs.BOX_CENTER[1],
+            rs.BOX_FLOOR_T + rs.CUBE_SIZE / 2.0,
+        ]
+        p.resetBasePositionAndOrientation(body, inside_position, [0, 0, 0, 1])
+        p.resetBaseVelocity(body, [0, 0, 0], [0, 0, 0])
+        self.assertEqual(self.robot.cubes_in_drop_zone(), 1)
+
+        p.resetBaseVelocity(body, [0.2, 0, 0], [0, 0, 0])
+        self.assertEqual(self.robot.cubes_in_drop_zone(), 0)
+
+        p.resetBaseVelocity(body, [0, 0, 0], [0, 0, 0])
+        p.resetBasePositionAndOrientation(
+            body, [rs.BOX_CENTER[0] + rs.BOX_INNER_HALF + 0.01,
+                   rs.BOX_CENTER[1], inside_position[2]], [0, 0, 0, 1]
+        )
+        self.assertEqual(self.robot.cubes_in_drop_zone(), 0)
+
 
 if __name__ == "__main__":
     unittest.main()
