@@ -43,6 +43,12 @@ class HandCalibrationTests(unittest.TestCase):
 
 
 class GripperGateTests(unittest.TestCase):
+    def test_frame_count_must_be_a_positive_integer(self):
+        for frames in (0, -1, 1.5, True):
+            with self.subTest(frames=frames):
+                with self.assertRaises(ValueError):
+                    teleop.GripperGate(frames=frames)
+
     def test_gesture_must_be_stable_before_gripper_action_fires(self):
         gate = teleop.GripperGate(frames=3)
 
