@@ -86,6 +86,24 @@ class GripperGateTests(unittest.TestCase):
 
 
 class TargetFilterTests(unittest.TestCase):
+    def test_constructor_rejects_empty_multidimensional_or_non_finite_start(self):
+        for start in (
+            np.array([], dtype=np.float64),
+            np.array([[0.4, 0.0, 0.4]], dtype=np.float64),
+            np.array([0.4, float("nan"), 0.4], dtype=np.float64),
+        ):
+            with self.subTest(start=start):
+                with self.assertRaises(ValueError):
+                    teleop.TargetFilter(start)
+
+    def test_reset_rejects_wrong_shape_or_non_finite_position(self):
+        target_filter = teleop.TargetFilter(np.array([0.4, 0.0, 0.4]))
+
+        with self.assertRaises(ValueError):
+            target_filter.reset(np.array([0.4, 0.0]))
+        with self.assertRaises(ValueError):
+            target_filter.reset(np.array([0.4, float("inf"), 0.4]))
+
     def test_step_respects_cartesian_speed_limit(self):
         start = np.array([0.4, 0.0, 0.4], dtype=np.float64)
         target_filter = teleop.TargetFilter(start)
