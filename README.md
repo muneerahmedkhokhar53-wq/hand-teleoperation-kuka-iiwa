@@ -2,9 +2,7 @@
 
 Control a simulated **7-DOF KUKA iiwa** robot arm with your **bare hand and a webcam**. Hand landmarks are tracked in real time with MediaPipe, mapped to a Cartesian target, and solved with inverse kinematics inside a **PyBullet** physics simulation. A physically simulated two-finger gripper lets you pick up cubes and drop them into a container box.
 
-<!-- Add a demo GIF or screenshot here:
-![Demo](docs/demo.gif)
--->
+<!-- Add a real, checked-in demo at docs/demo.gif when available. Do not use a placeholder image. -->
 
 ## Features
 
@@ -68,6 +66,8 @@ Vision_Teleoperation/
 
 ## Requirements
 
+This repository describes a **simulation** workflow; it does not connect to or control a physical KUKA robot. Validate any real-robot adaptation separately with the robot manufacturer’s safety procedures.
+
 - Python 3.9 to 3.12
 - A webcam
 - Packages: `numpy`, `opencv-python`, `mediapipe`, `pybullet`
@@ -75,8 +75,8 @@ Vision_Teleoperation/
 ## Installation
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/Vision_Teleoperation.git
-cd Vision_Teleoperation
+git clone https://github.com/muneerahmedkhokhar53-wq/hand-teleoperation-kuka-iiwa.git
+cd hand-teleoperation-kuka-iiwa
 
 python -m venv venv
 
