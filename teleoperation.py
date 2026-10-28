@@ -149,6 +149,13 @@ class HandToRobot:
         return float(np.clip(raw, -1.0, 1.0))
 
     def map(self, palm_xy) -> np.ndarray:
+        """Map a finite normalized 2D palm coordinate to a robot target."""
+        palm_xy = np.asarray(palm_xy, dtype=np.float64)
+        if palm_xy.shape != (2,):
+            raise ValueError("palm_xy must contain exactly two coordinates")
+        if not np.all(np.isfinite(palm_xy)):
+            raise ValueError("palm_xy must contain only finite coordinates")
+
         x0, y0, x1, y1 = ZONE
 
         ux = float(np.clip(self._unit(palm_xy[0], x0, x1) * XY_GAIN, -1.0, 1.0))
