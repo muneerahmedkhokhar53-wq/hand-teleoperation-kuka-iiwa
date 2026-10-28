@@ -132,6 +132,16 @@ class TargetFilterTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             target_filter.step(np.array([0.5, float("nan"), 0.5]), 0.01)
 
+    def test_step_rejects_overflow_without_corrupting_filter_state(self):
+        start = np.array([0.4, 0.0, 0.4], dtype=np.float64)
+        target_filter = teleop.TargetFilter(start)
+
+        with np.errstate(over="ignore", invalid="ignore"):
+            with self.assertRaises(ValueError):
+                target_filter.step(np.array([1e308, -1e308, 1e308]), 0.01)
+
+        np.testing.assert_array_equal(target_filter.value, start)
+
     def test_hand_mapping_returns_finite_three_axis_target(self):
         mapper = teleop.HandToRobot()
         mapper.update_size(0.2)
