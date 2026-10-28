@@ -92,6 +92,22 @@ class TargetFilterTests(unittest.TestCase):
         self.assertLessEqual(distance, teleop.MAX_SPEED * dt + 1e-12)
         self.assertTrue(np.all(np.isfinite(actual)))
 
+    def test_step_rejects_non_positive_or_non_finite_dt(self):
+        target_filter = teleop.TargetFilter(np.array([0.4, 0.0, 0.4]))
+
+        for dt in (0.0, -0.01, float("nan"), float("inf")):
+            with self.subTest(dt=dt):
+                with self.assertRaises(ValueError):
+                    target_filter.step(np.array([0.5, 0.0, 0.5]), dt)
+
+    def test_step_rejects_wrong_shape_or_non_finite_target(self):
+        target_filter = teleop.TargetFilter(np.array([0.4, 0.0, 0.4]))
+
+        with self.assertRaises(ValueError):
+            target_filter.step(np.array([0.5, 0.0]), 0.01)
+        with self.assertRaises(ValueError):
+            target_filter.step(np.array([0.5, float("nan"), 0.5]), 0.01)
+
     def test_hand_mapping_returns_finite_three_axis_target(self):
         mapper = teleop.HandToRobot()
         mapper.update_size(0.2)
