@@ -70,6 +70,14 @@ class GripperGateTests(unittest.TestCase):
         self.assertIsNone(gate.update("PINCH"))
         self.assertEqual(gate.update("PINCH"), "close")
 
+    def test_unmapped_gesture_resets_pending_debounce(self):
+        gate = teleop.GripperGate(frames=2)
+
+        self.assertIsNone(gate.update("PINCH"))
+        self.assertIsNone(gate.update("TRACKING"))
+        self.assertIsNone(gate.update("PINCH"))
+        self.assertEqual(gate.update("PINCH"), "close")
+
 
 class TargetFilterTests(unittest.TestCase):
     def test_step_respects_cartesian_speed_limit(self):
