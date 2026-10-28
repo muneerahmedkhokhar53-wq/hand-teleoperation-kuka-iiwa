@@ -167,10 +167,20 @@ class TargetFilter:
     """Exponential smoothing with a hard Cartesian speed limit."""
 
     def __init__(self, start: np.ndarray) -> None:
-        self.value = np.asarray(start, dtype=np.float64).copy()
+        position = np.asarray(start, dtype=np.float64)
+        if position.ndim != 1 or position.size == 0:
+            raise ValueError("start position must be a non-empty 1D array")
+        if not np.all(np.isfinite(position)):
+            raise ValueError("start position must contain only finite values")
+        self.value = position.copy()
 
     def reset(self, position: np.ndarray) -> None:
-        self.value = np.asarray(position, dtype=np.float64).copy()
+        position = np.asarray(position, dtype=np.float64)
+        if position.shape != self.value.shape:
+            raise ValueError("reset position must match the current position shape")
+        if not np.all(np.isfinite(position)):
+            raise ValueError("reset position must contain only finite values")
+        self.value = position.copy()
 
     def step(self, desired: np.ndarray, dt: float) -> np.ndarray:
         """Move toward a finite target using a positive time step."""
