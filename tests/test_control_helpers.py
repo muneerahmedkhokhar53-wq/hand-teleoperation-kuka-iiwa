@@ -41,6 +41,16 @@ class HandCalibrationTests(unittest.TestCase):
         self.assertTrue(mapper.calibrate())
         self.assertAlmostEqual(mapper.neutral, 0.31)
 
+    def test_update_size_rejects_non_positive_or_non_finite_measurements(self):
+        mapper = teleop.HandToRobot()
+
+        for size in (0.0, -0.1, float("nan"), float("inf"), -float("inf")):
+            with self.subTest(size=size):
+                with self.assertRaises(ValueError):
+                    mapper.update_size(size)
+
+        self.assertIsNone(mapper._size)
+
 
 class GripperGateTests(unittest.TestCase):
     def test_frame_count_must_be_a_positive_integer(self):
