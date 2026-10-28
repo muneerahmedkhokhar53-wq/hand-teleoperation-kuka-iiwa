@@ -42,6 +42,35 @@ class HandCalibrationTests(unittest.TestCase):
         self.assertAlmostEqual(mapper.neutral, 0.31)
 
 
+class GripperGateTests(unittest.TestCase):
+    def test_gesture_must_be_stable_before_gripper_action_fires(self):
+        gate = teleop.GripperGate(frames=3)
+
+        self.assertIsNone(gate.update("PINCH"))
+        self.assertIsNone(gate.update("PINCH"))
+        self.assertEqual(gate.update("PINCH"), "close")
+        self.assertIsNone(gate.update("PINCH"))
+
+    def test_open_and_close_actions_can_alternate(self):
+        gate = teleop.GripperGate(frames=2)
+
+        self.assertIsNone(gate.update("PINCH"))
+        self.assertEqual(gate.update("PINCH"), "close")
+        self.assertIsNone(gate.update("OPEN PALM"))
+        self.assertEqual(gate.update("OPEN PALM"), "open")
+        self.assertIsNone(gate.update("PINCH"))
+        self.assertEqual(gate.update("PINCH"), "close")
+
+    def test_reset_allows_a_new_gesture_sequence(self):
+        gate = teleop.GripperGate(frames=2)
+
+        gate.update("PINCH")
+        self.assertEqual(gate.update("PINCH"), "close")
+        gate.reset()
+        self.assertIsNone(gate.update("PINCH"))
+        self.assertEqual(gate.update("PINCH"), "close")
+
+
 class TargetFilterTests(unittest.TestCase):
     def test_step_respects_cartesian_speed_limit(self):
         start = np.array([0.4, 0.0, 0.4], dtype=np.float64)
