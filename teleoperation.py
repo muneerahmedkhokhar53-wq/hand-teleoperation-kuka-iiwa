@@ -112,6 +112,9 @@ class HandToRobot:
         self._size: Optional[float] = None
 
     def update_size(self, size: float) -> None:
+        """Update the smoothed hand size from a valid positive measurement."""
+        if not math.isfinite(size) or size <= 0.0:
+            raise ValueError("hand size must be a finite positive number")
         self._size = size if self._size is None else 0.8 * self._size + 0.2 * size
 
     def calibrate(self) -> bool:
