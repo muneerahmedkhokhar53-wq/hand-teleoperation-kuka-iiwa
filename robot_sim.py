@@ -43,6 +43,10 @@ TIME_STEP = 1.0 / 240.0
 MAX_SUBSTEPS = 30
 TRAIL_LIFETIME = 2.5
 
+# A cube only counts as delivered after it settles inside the drop container.
+DROP_ZONE_REST_SPEED = 0.05  # m/s
+DROP_ZONE_REST_ANGULAR_SPEED = 0.10  # rad/s
+
 
 # ============================================================================
 # ROBOT
@@ -346,15 +350,21 @@ class RobotArm:
     # ------------------------------------------------------------------
 
     def cubes_in_drop_zone(self) -> int:
-        """Number of cubes resting inside the container."""
+        """Number of settled cubes inside the container."""
         cx, cy = BOX_CENTER
         count = 0
         for body, _ in self.props:
             pos, _ = p.getBasePositionAndOrientation(body)
+            linear_velocity, angular_velocity = p.getBaseVelocity(body)
+            settled = (
+                np.linalg.norm(linear_velocity) <= DROP_ZONE_REST_SPEED
+                and np.linalg.norm(angular_velocity) <= DROP_ZONE_REST_ANGULAR_SPEED
+            )
             if (
-                abs(pos[0] - cx) < BOX_INNER_HALF
+                settled
+                and abs(pos[0] - cx) < BOX_INNER_HALF
                 and abs(pos[1] - cy) < BOX_INNER_HALF
-                and pos[2] < BOX_FLOOR_T + CUBE_SIZE / 2.0 + 0.02  # resting, not carried
+                and pos[2] < BOX_FLOOR_T + CUBE_SIZE / 2.0 + 0.02
             ):
                 count += 1
         return count
