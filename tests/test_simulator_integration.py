@@ -64,10 +64,11 @@ class SimulatorIntegrationTests(unittest.TestCase):
 
     def test_gripper_contacts_cube_with_both_fingers_and_releases_it(self):
         """Exercise real finger/cube collision, not only motor joint travel."""
-        # Keep the deliberately suspended test cube in place so gravity does
-        # not move it out of the gripper before the close command is tested.
-        p.setGravity(0, 0, 0)
+        # Use a fixed test cube so the fingers cannot push it away while the
+        # contact assertion is being checked. Other integration tests cover
+        # dynamic cubes and drop-zone settling.
         body = self.robot.props[0][0]
+        p.changeDynamics(body, -1, mass=0)
         gripper_pos, gripper_orn = p.getBasePositionAndOrientation(
             self.robot.gripper_id
         )
